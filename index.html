@@ -366,6 +366,7 @@
         <!-- Sol: Yeni Oyun Ekle Formu -->
         <div class="bg-[#121929] border border-gray-800 rounded-xl p-5 sm:p-6">
           <h3 class="font-orbitron font-bold text-white mb-5 border-b border-gray-800 pb-3" data-i18n="addNewGameTitle">Yeni Web Oyunu Ekle</h3>
+          <div id="adminFormError" class="hidden bg-rose-500/10 border border-rose-500/50 text-rose-400 text-xs p-3 rounded-lg mb-4 text-center break-words font-semibold"></div>
           <form id="addGameForm" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -503,137 +504,75 @@
     </div>
   </div>
 
-  <!-- ==================== FIREBASE ==================== -->
+  <!-- ==================== FIREBASE & LOCALSTORAGE YÖNETİMİ ==================== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-    let app, auth, db;
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-      window.firebaseAuth = auth;
-      window.db = db;
-      window.appId = typeof __app_id !== 'undefined' ? __app_id : 'arcade-zone-portal';
-      window.fsCollection = collection;
-      window.fsDoc = doc;
-      window.fsSetDoc = setDoc;
-      window.fsDeleteDoc = deleteDoc;
-      window.fsOnSnapshot = onSnapshot;
+    // EĞER İLERİDE KENDİ FİREBASE'İNİ KURARSAN BİLGİLERİ BURAYA YAPIŞTIRACAKSIN:
+    const customFirebaseConfig = {}; 
+    
+    const systemConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const firebaseConfig = Object.keys(customFirebaseConfig).length > 0 ? customFirebaseConfig : systemConfig;
+    
+    window.isFirebaseActive = Object.keys(firebaseConfig).length > 0;
+    window.appId = typeof __app_id !== 'undefined' ? __app_id : 'arcade-zone-portal';
 
-      window.doEmailLogin = async (email, password) => signInWithEmailAndPassword(auth, email, password);
-      window.doEmailRegister = async (name, email, password) => {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(cred.user, { displayName: name });
-        return cred;
-      };
-      window.doGoogleLogin = async () => {
-        const provider = new GoogleAuthProvider();
-        return signInWithPopup(auth, provider);
-      };
-      window.doLogout = async () => {
-        await signOut(auth);
-        // Çıkış yapıldıktan sonra sistemin bozulmaması için tekrar anonim (misafir) girişi yap
-        await signInAnonymously(auth);
-      };
+    if (window.isFirebaseActive) {
+      try {
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        window.firebaseAuth = auth; window.db = db;
+        window.fsCollection = collection; window.fsDoc = doc; window.fsSetDoc = setDoc; window.fsDeleteDoc = deleteDoc; window.fsOnSnapshot = onSnapshot;
 
-      const initAuth = async () => {
-        try {
-          if (typeof __initial_auth_token !== 'undefined') {
-            await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-            await signInAnonymously(auth);
-          }
-        } catch(e) { console.error("Firebase auth init error:", e); }
-      };
+        window.doEmailLogin = async (email, password) => signInWithEmailAndPassword(auth, email, password);
+        window.doEmailRegister = async (name, email, password) => {
+          const cred = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(cred.user, { displayName: name });
+          return cred;
+        };
+        window.doGoogleLogin = async () => signInWithPopup(auth, new GoogleAuthProvider());
+        window.doLogout = async () => { await signOut(auth); await signInAnonymously(auth); };
 
-      initAuth();
+        const initAuth = async () => {
+          try {
+            if (typeof __initial_auth_token !== 'undefined') await signInWithCustomToken(auth, __initial_auth_token);
+            else await signInAnonymously(auth);
+          } catch(e) {}
+        };
+        initAuth();
 
-      let isInitialGamesLoad = true;
-      let unsubscribeGames = null;
+        let isInitLoad = true;
+        let unsub = null;
 
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          // Cloud veritabanını dinlemeye başla (Tüm kullanıcılar için)
-          if (!unsubscribeGames && window.db) {
-            const gamesRef = window.fsCollection(window.db, 'artifacts', window.appId, 'public', 'data', 'games');
-            unsubscribeGames = window.fsOnSnapshot(gamesRef, async (snapshot) => {
-              if (snapshot.empty && isInitialGamesLoad) {
-                isInitialGamesLoad = false;
-                // Veritabanı tamamen boşsa ilk kurulum olarak varsayılan oyunları yükle
-                for (const game of DEFAULT_GAMES) {
-                  try {
-                    await window.fsSetDoc(window.fsDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'games', game.id), game);
-                  } catch(e) { console.error("Varsayılan oyun eklenemedi:", e); }
+        onAuthStateChanged(auth, (user) => {
+          if (user && !unsub && window.db) {
+            unsub = onSnapshot(collection(window.db, 'artifacts', window.appId, 'public', 'data', 'games'), async (snapshot) => {
+              if (snapshot.empty && isInitLoad) {
+                isInitLoad = false;
+                for (const game of window.DEFAULT_GAMES_REF || []) {
+                  try { await setDoc(doc(window.db, 'artifacts', window.appId, 'public', 'data', 'games', game.id), game); } catch(e) {}
                 }
                 return;
               }
-              isInitialGamesLoad = false;
-              
+              isInitLoad = false;
               const dbGames = [];
-              snapshot.forEach(doc => dbGames.push(doc.data()));
-              // Yeni eklenenler üstte olacak şekilde sırala (ID'ler timestamp içerir)
+              snapshot.forEach(d => dbGames.push(d.data()));
               dbGames.sort((a,b) => b.id.localeCompare(a.id));
-              
-              if(typeof games !== 'undefined') {
-                games = dbGames;
-                renderCategories();
-                renderGames();
-                const adminModal = document.getElementById('adminPanelModal');
-                if(adminModal && adminModal.classList.contains('flex')) {
-                  renderAdminGamesList();
-                }
-                if (typeof currentGameInModal !== 'undefined' && currentGameInModal) {
-                  const updated = games.find(g => g.id === currentGameInModal.id);
-                  if (updated) {
-                    currentGameInModal = updated;
-                    renderModalReviews(currentGameInModal);
-                  }
-                }
-              }
-            }, (err) => {
-              console.error("Firestore okuma hatası:", err);
+              if(window.updateGamesFromCloud) window.updateGamesFromCloud(dbGames);
             });
           }
-        }
-
-        if (user && !user.isAnonymous) {
-          // Giriş Yapılmış Durum
-          document.getElementById('authNavGroup')?.classList.add('hidden');
-          document.getElementById('authNavGroup')?.classList.remove('flex');
-          document.getElementById('userNavGroup')?.classList.remove('hidden');
-          document.getElementById('userNavGroup')?.classList.add('flex');
-          
-          const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Oyuncu');
-          const nameDisplay = document.getElementById('userNameDisplay');
-          if(nameDisplay) nameDisplay.textContent = displayName;
-
-          const reviewerNameInput = document.getElementById('reviewerNameInput');
-          if(reviewerNameInput) {
-            reviewerNameInput.value = displayName;
-            reviewerNameInput.readOnly = true;
-            reviewerNameInput.classList.add('opacity-70', 'cursor-not-allowed');
-          }
-        } else {
-          // Anonim / Çıkış Yapılmış Durum
-          document.getElementById('authNavGroup')?.classList.remove('hidden');
-          document.getElementById('authNavGroup')?.classList.add('flex');
-          document.getElementById('userNavGroup')?.classList.add('hidden');
-          document.getElementById('userNavGroup')?.classList.remove('flex');
-          
-          const reviewerNameInput = document.getElementById('reviewerNameInput');
-          if(reviewerNameInput) {
-            reviewerNameInput.value = '';
-            reviewerNameInput.readOnly = false;
-            reviewerNameInput.classList.remove('opacity-70', 'cursor-not-allowed');
-          }
-        }
-      });
-    } catch(e) {
-       console.warn("Firebase not configured properly:", e);
+          if(window.updateAuthUI) window.updateAuthUI(user);
+        });
+      } catch(e) { window.isFirebaseActive = false; }
+    } else {
+      console.warn("Veritabanı bulunamadı. Site tarayıcı belleğinde (LocalStorage) çalışıyor.");
+      window.doEmailLogin = async () => { throw new Error("Veritabanı bağlı değil."); };
+      window.doEmailRegister = async () => { throw new Error("Veritabanı bağlı değil."); };
+      window.doGoogleLogin = async () => { throw new Error("Veritabanı bağlı değil."); };
+      window.doLogout = async () => {};
     }
   </script>
 
@@ -906,36 +845,104 @@
     const adminGamesList = document.getElementById('adminGamesList');
     const adminGameCount = document.getElementById('adminGameCount');
 
-    // --- FIREBASE YARDIMCI FONKSİYONLAR ---
+    // --- FIREBASE VE LOCALSTORAGE YARDIMCI FONKSİYONLAR ---
+    window.DEFAULT_GAMES_REF = DEFAULT_GAMES;
+
+    window.updateAuthUI = function(user) {
+      if (user && !user.isAnonymous) {
+        document.getElementById('authNavGroup')?.classList.add('hidden');
+        document.getElementById('authNavGroup')?.classList.remove('flex');
+        document.getElementById('userNavGroup')?.classList.remove('hidden');
+        document.getElementById('userNavGroup')?.classList.add('flex');
+        const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Oyuncu');
+        const nameDisplay = document.getElementById('userNameDisplay');
+        if(nameDisplay) nameDisplay.textContent = displayName;
+        const reviewerNameInput = document.getElementById('reviewerNameInput');
+        if(reviewerNameInput) {
+          reviewerNameInput.value = displayName;
+          reviewerNameInput.readOnly = true;
+          reviewerNameInput.classList.add('opacity-70', 'cursor-not-allowed');
+        }
+      } else {
+        document.getElementById('authNavGroup')?.classList.remove('hidden');
+        document.getElementById('authNavGroup')?.classList.add('flex');
+        document.getElementById('userNavGroup')?.classList.add('hidden');
+        document.getElementById('userNavGroup')?.classList.remove('flex');
+        const reviewerNameInput = document.getElementById('reviewerNameInput');
+        if(reviewerNameInput) {
+          reviewerNameInput.value = '';
+          reviewerNameInput.readOnly = false;
+          reviewerNameInput.classList.remove('opacity-70', 'cursor-not-allowed');
+        }
+      }
+    };
+
+    window.updateGamesFromCloud = function(cloudGames) {
+      games = cloudGames;
+      renderCategories();
+      renderGames();
+      const adminModal = document.getElementById('adminPanelModal');
+      if(adminModal && adminModal.classList.contains('flex')) renderAdminGamesList();
+      if (currentGameInModal) {
+        const updated = games.find(g => g.id === currentGameInModal.id);
+        if (updated) {
+          currentGameInModal = updated;
+          renderModalReviews(currentGameInModal);
+        }
+      }
+    };
+
     async function saveGameToDB(game) {
-      if (!window.db || !window.firebaseAuth.currentUser) return;
-      try {
-        const docRef = window.fsDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'games', game.id);
-        await window.fsSetDoc(docRef, game);
-      } catch(e) { console.error("Veritabanına kaydetme hatası:", e); }
+      if (window.isFirebaseActive && window.db && window.firebaseAuth && window.firebaseAuth.currentUser) {
+        const gameStr = JSON.stringify(game);
+        if (gameStr.length > 900000) throw new Error("Seçtiğiniz kapak görseli çok büyük!");
+        try {
+          await window.fsSetDoc(window.fsDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'games', game.id), game);
+        } catch(e) { throw new Error("Kaydedilemedi: " + e.message); }
+      } else {
+        // YEREL BELLEK (LOCALSTORAGE) KAYDI
+        const existingIdx = games.findIndex(g => g.id === game.id);
+        if(existingIdx >= 0) games[existingIdx] = game;
+        else games.unshift(game);
+        localStorage.setItem('arcade_zone_local_games', JSON.stringify(games));
+        window.updateGamesFromCloud(games);
+      }
     }
 
     async function deleteGameFromDB(id) {
-      if (!window.db || !window.firebaseAuth.currentUser) return;
-      try {
-        const docRef = window.fsDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'games', id);
-        await window.fsDeleteDoc(docRef);
-      } catch(e) { console.error("Veritabanından silme hatası:", e); }
+      if (window.isFirebaseActive && window.db && window.firebaseAuth && window.firebaseAuth.currentUser) {
+        try {
+          await window.fsDeleteDoc(window.fsDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'games', id));
+        } catch(e) { console.error("Silme hatası:", e); }
+      } else {
+        // YEREL BELLEKTEN SİL
+        games = games.filter(g => g.id !== id);
+        localStorage.setItem('arcade_zone_local_games', JSON.stringify(games));
+        window.updateGamesFromCloud(games);
+      }
     }
 
     // --- BAŞLATMA ---
     function init() {
-      // Artık localStorage yerine Firebase kullanılıyor
       applyLanguage(currentLang);
-      renderCategories();
-      renderGames();
+      
+      if (!window.isFirebaseActive) {
+        // Firebase yoksa verileri tarayıcının yerel belleğinden getir
+        const localData = localStorage.getItem('arcade_zone_local_games');
+        if (localData) {
+          games = JSON.parse(localData);
+        } else {
+          games = [...DEFAULT_GAMES];
+          localStorage.setItem('arcade_zone_local_games', JSON.stringify(games));
+        }
+        window.updateGamesFromCloud(games);
+      }
+
       setupEventListeners();
       setupStarPicker();
     }
 
-    function saveGamesToStorage() {
-      // İptal edildi - Artık Firebase kullanılıyor
-    }
+    function saveGamesToStorage() {}
 
     // --- DİL YÖNETİMİ ---
     function setLanguage(lang) {
@@ -1392,43 +1399,60 @@
       addGameForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const t = translations[currentLang];
-
-        const title = gameTitleInput.value.trim();
-        const category = gameCategoryInput.value;
-        const url = gameUrlInput.value.trim();
-        const desc = gameDescInput.value.trim();
-
-        let image = uploadedImageBase64 || gameImageUrlInput.value.trim();
-        if (!image) {
-          image = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&auto=format&fit=crop&q=60";
-        }
-
-        const newGame = {
-          id: 'game_' + Date.now(),
-          title: title,
-          category: category,
-          url: url,
-          image: image,
-          description: desc,
-          plays: 0,
-          reviews: []
-        };
-
-        // Veritabanına kaydet (onSnapshot UI'ı otomatik güncelleyecek)
-        await saveGameToDB(newGame);
-
-        addGameForm.reset();
-        uploadedImageBase64 = null;
-        imagePreviewContainer.classList.add('hidden');
-
+        
+        const errorBox = document.getElementById('adminFormError');
+        errorBox.classList.add('hidden');
+        
         const submitBtn = document.getElementById('submitNewGameBtn');
         const oldText = submitBtn.innerHTML;
-        submitBtn.innerHTML = t.addedSuccess;
-        submitBtn.classList.replace('from-pink-500', 'from-emerald-500');
-        setTimeout(() => {
+        submitBtn.innerHTML = "Yükleniyor...";
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+        try {
+          const title = gameTitleInput.value.trim();
+          const category = gameCategoryInput.value;
+          const url = gameUrlInput.value.trim();
+          const desc = gameDescInput.value.trim();
+
+          let image = uploadedImageBase64 || gameImageUrlInput.value.trim();
+          if (!image) {
+            image = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&auto=format&fit=crop&q=60";
+          }
+
+          const newGame = {
+            id: 'game_' + Date.now(),
+            title: title,
+            category: category,
+            url: url,
+            image: image,
+            description: desc,
+            plays: 0,
+            reviews: []
+          };
+
+          // Veritabanına kaydet (onSnapshot UI'ı otomatik güncelleyecek)
+          await saveGameToDB(newGame);
+
+          addGameForm.reset();
+          uploadedImageBase64 = null;
+          imagePreviewContainer.classList.add('hidden');
+
+          submitBtn.innerHTML = t.addedSuccess || "✓ Başarıyla Eklendi!";
+          submitBtn.classList.replace('from-pink-500', 'from-emerald-500');
+          setTimeout(() => {
+            submitBtn.innerHTML = oldText;
+            submitBtn.classList.replace('from-emerald-500', 'from-pink-500');
+          }, 1800);
+        } catch (error) {
+          console.error("Oyun ekleme hatası:", error);
+          errorBox.textContent = error.message;
+          errorBox.classList.remove('hidden');
           submitBtn.innerHTML = oldText;
-          submitBtn.classList.replace('from-emerald-500', 'from-pink-500');
-        }, 1800);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
       });
 
       // --- KULLANICI GİRİŞ & KAYIT (AUTH) MODAL EVENTLERİ ---
