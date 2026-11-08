@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArcadeZone - Web Oyun Portalı</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Orbitron & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            orbitron: ['Orbitron', 'sans-serif'],
+          },
+          colors: {
+            arcade: {
+              purple: '#8b5cf6',
+              neonPink: '#ec4899',
+              cyan: '#06b6d4',
+              amber: '#f59e0b',
+              dark: '#0b0f19',
+              card: '#111827',
+              border: '#1f2937'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Özel kaydırma çubuğu ve neon parlamalar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f2937;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #374151;
+    }
+    .neon-glow-pink {
+      box-shadow: 0 0 25px -5px rgba(236, 72, 153, 0.45);
+    }
+    .neon-glow-cyan {
+      box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.45);
+    }
+    .glass-nav {
+      background: rgba(11, 15, 25, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+  </style>
+</head>
+<body class="bg-[#090d16] text-gray-200 min-h-screen flex flex-col font-sans selection:bg-pink-500 selection:text-white">
+
+  <!-- Üst Gezinme Çubuğu (Navbar) -->
+  <header class="sticky top-0 z-40 glass-nav border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-3">
+      
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-3 group shrink-0">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-pink-500 to-cyan-500 p-0.5 shadow-lg group-hover:scale-105 transition-transform duration-300">
+          <div class="w-full h-full bg-[#0b0f19] rounded-[10px] flex items-center justify-center">
+            <svg class="w-6 h-6 text-pink-400 group-hover:text-cyan-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>
+              <circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/>
+              <circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/>
+            </svg>
+          </div>
+        </div>
+        <div class="leading-none hidden sm:block">
+          <span class="font-orbitron font-extrabold text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400">ARCADE<span class="text-white">ZONE</span></span>
+          <span data-i18n="portalSubtitle" class="block text-[10px] font-mono tracking-widest text-gray-400 uppercase mt-0.5">Web Oyun Platformu</span>
+        </div>
+      </a>
+
+      <!-- Arama Kutusu (Masaüstü) -->
+      <div class="hidden md:flex flex-1 max-w-md mx-4 relative">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input type="text" id="desktopSearchInput" placeholder="Oyun ara (2048, Hextris, Aksiyon...)" 
+               class="w-full bg-[#131b2e] border border-gray-700/80 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all duration-200">
+      </div>
+
+      <!-- Sağ Taraf: Dil Seçici & Yönetici Butonu -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Dil Seçici (TR / EN) -->
+        <div class="inline-flex rounded-xl bg-[#131b2e] border border-gray-700/80 p-0.5 text-xs font-semibold">
+          <button id="langBtnTR" class="px-2.5 py-1.5 rounded-lg transition-all text-white bg-pink-500 shadow">TR</button>
+          <button id="langBtnEN" class="px-2.5 py-1.5 rounded-lg transition-all text-gray-400 hover:text-white">EN</button>
+        </div>
+
+        <!-- Kullanıcı Giriş/Kayıt Butonları (Anonimken Görünür) -->
+        <div id="authNavGroup" class="hidden items-center gap-2">
+          <button id="openLoginBtn" class="hidden sm:block px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:text-white transition-colors" data-i18n="loginBtnNav">Giriş</button>
+          <button id="openRegisterBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-pink-600 hover:bg-pink-500 text-white shadow-lg transition-colors" data-i18n="registerBtnNav">Kayıt Ol</button>
+        </div>
+
+        <!-- Kullanıcı Profili (Giriş Yapıldığında Görünür) -->
+        <div id="userNavGroup" class="hidden items-center gap-2">
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800/80 border border-gray-700">
+             <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_5px_#34d399]"></div>
+             <span id="userNameDisplay" class="text-xs font-bold text-gray-200 hidden sm:block"></span>
+          </div>
+          <button id="logoutBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors" data-i18n="logoutBtn">Çıkış</button>
+        </div>
+
+        <!-- Yönetici Giriş Butonu -->
+        <button id="openAdminBtn" class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gray-800/90 hover:bg-gray-700 border border-gray-700 hover:border-pink-500/50 text-gray-300 hover:text-pink-400 transition-all duration-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span class="hidden sm:inline" data-i18n="adminPanelBtn">Yönetici Paneli</span>
+          <span class="sm:hidden" data-i18n="adminPanelBtnShort">Yönetici</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Arama Kutusu (Mobil) -->
+    <div class="md:hidden px-4 pb-3.5">
+      <div class="relative w-full">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input type="text" id="mobileSearchInput" placeholder="Oyun ara..." 
+               class="w-full bg-[#131b2e] border border-gray-700 rounded-lg pl-10 pr-3 py-2 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-400">
+      </div>
+    </div>
+  </header>
+
+  <!-- Ana İçerik -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Hero / Başlık Banner -->
+    <div class="relative rounded-3xl bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-pink-900/30 border border-gray-800 p-6 sm:p-10 mb-10 overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -left-10 -top-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div class="relative z-10 max-w-2xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-400 text-xs font-semibold mb-4">
+          <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
+          <span data-i18n="heroBadge">Anında Tarayıcıda Oyna & Puan Ver</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-orbitron font-extrabold text-white leading-tight mb-4" data-i18n="heroTitle">
+          Favori Web Oyunlarını <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-cyan-400">Tek Tıkla Keşfet</span>
+        </h1>
+        <p class="text-gray-400 text-sm sm:text-base leading-relaxed" data-i18n="heroDesc">
+          Topluluğun eklediği oyunları oyna, yıldız verip yorum yaz veya yönetici panelinden kendi favori oyunlarını platforma ekle!
+        </p>
+      </div>
+    </div>
+
+    <!-- Kategori Filtre Butonları -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none" id="categoryContainer">
+      <!-- JS ile dinamik render edilecek -->
+    </div>
+
+    <!-- Oyun Sayacı & Başlık -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <h2 class="font-orbitron text-xl sm:text-2xl font-bold text-white tracking-wide" data-i18n="gamesTitle">Oyunlar</h2>
+        <span id="gameCountBadge" class="bg-gray-800 text-cyan-400 text-xs font-mono font-bold px-2.5 py-1 rounded-full border border-gray-700">0 Oyun</span>
+      </div>
+    </div>
+
+    <!-- Oyun Kartları Izgarası (Grid) -->
+    <div id="gamesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <!-- JavaScript ile oyun kartları buraya eklenir -->
+    </div>
+
+    <!-- Oyun Bulunamadı Ekranı -->
+    <div id="noGamesFound" class="hidden text-center py-16">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-800/80 flex items-center justify-center text-gray-500">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-gray-300" data-i18n="noGamesTitle">Aradığınız kriterde oyun bulunamadı</h3>
+      <p class="text-sm text-gray-500 mt-1" data-i18n="noGamesDesc">Lütfen farklı bir arama terimi deneyin veya filtreleri temizleyin.</p>
+    </div>
+
+  </main>
+
+  <!-- Alt Bilgi (Footer) -->
+  <footer class="border-t border-gray-800 bg-[#070a12] py-8 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+      <div>
+        <span class="font-orbitron font-bold text-gray-300">ArcadeZone</span> — <span data-i18n="footerTagline">Kendi tarayıcı oyun portalın.</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <span data-i18n="footerRights">Tüm haklar geliştiricilerine aittir.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== MODALLAR ==================== -->
+
+  <!-- 1. OYUN OYNATICI VE DEĞERLENDİRME MODALI -->
+  <div id="playerModal" class="fixed inset-0 z-50 hidden flex-col bg-black/95 backdrop-blur-md">
+    <!-- Üst Kontrol Çubuğu -->
+    <div class="bg-[#101626] border-b border-gray-800 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+        <h3 id="playerGameTitle" class="font-orbitron text-sm sm:text-base font-bold text-white truncate">Oyun Yükleniyor...</h3>
+        <span id="playerGameCategory" class="hidden sm:inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-gray-800 text-cyan-400 border border-gray-700">Kategori</span>
+        <!-- Ortalama Yıldız Rozeti -->
+        <div class="hidden md:flex items-center gap-1 text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20 text-xs font-semibold">
+          <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          <span id="playerModalAvgRating">0.0</span>
+          <span class="text-gray-400 text-[10px]" id="playerModalReviewCount">(0)</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- İncelemeleri Göster / Gizle Çekmecesi Butonu -->
+        <button id="toggleReviewsBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-300 text-xs font-semibold transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          <span data-i18n="reviewsBtn">Puanlar & Yorumlar</span>
+        </button>
+
+        <!-- Yeniden Yükle -->
+        <button id="reloadGameBtn" title="Oyunu Yeniden Başlat" class="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </button>
+
+        <!-- Tam Ekran -->
+        <button id="fullscreenGameBtn" title="Tam Ekran Modu" class="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+          </svg>
+        </button>
+
+        <!-- Kapat -->
+        <button id="closePlayerBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white font-medium text-xs sm:text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          <span data-i18n="closeBtn">Kapat</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Gövde: Oyun Ekranı + Açılır Yorum Paneli -->
+    <div class="relative flex-1 w-full h-full bg-[#07090f] flex overflow-hidden">
+      
+      <!-- iframe Konteyneri -->
+      <div class="relative flex-1 h-full w-full flex items-center justify-center">
+        <!-- Yükleniyor Göstergesi -->
+        <div id="playerLoadingSpinner" class="absolute inset-0 flex flex-col items-center justify-center bg-[#07090f] z-10">
+          <div class="w-12 h-12 border-4 border-pink-500/20 border-t-pink-500 rounded-full animate-spin mb-4"></div>
+          <p class="font-orbitron text-sm text-gray-400" data-i18n="gameLoading">Oyun Başlatılıyor...</p>
+        </div>
+
+        <iframe id="gameIframe" 
+                src="" 
+                class="w-full h-full border-0 relative z-20"
+                allow="autoplay; fullscreen; gamepad; focus-without-user-activation *" 
+                allowfullscreen>
+        </iframe>
+      </div>
+
+      <!-- Yan Yorum & Değerlendirme Paneli (Drawer) -->
+      <div id="reviewsDrawer" class="hidden md:flex flex-col w-80 lg:w-96 bg-[#0e1424] border-l border-gray-800 h-full p-4 overflow-y-auto shrink-0 z-30 shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-800 mb-4">
+          <h4 class="font-orbitron font-bold text-sm text-white" data-i18n="reviewsHeading">Yorumlar & Puanlama</h4>
+          <span id="drawerAverageBadge" class="text-xs bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded font-bold border border-amber-500/20">★ 0.0</span>
+        </div>
+
+        <!-- Puan Verme Formu -->
+        <div class="bg-[#131b2e] p-3.5 rounded-xl border border-gray-700/80 mb-5">
+          <h5 class="text-xs font-semibold text-gray-200 mb-2" data-i18n="rateGamePrompt">Bu oyunu değerlendir:</h5>
+          
+          <!-- İnteraktif Yıldız Seçimi -->
+          <div class="flex items-center gap-1.5 mb-3" id="starRatingSelect">
+            <button type="button" data-val="1" class="star-pick text-gray-600 hover:text-amber-400 text-2xl leading-none transition-colors">★</button>
+            <button type="button" data-val="2" class="star-pick text-gray-600 hover:text-amber-400 text-2xl leading-none transition-colors">★</button>
+            <button type="button" data-val="3" class="star-pick text-gray-600 hover:text-amber-400 text-2xl leading-none transition-colors">★</button>
+            <button type="button" data-val="4" class="star-pick text-gray-600 hover:text-amber-400 text-2xl leading-none transition-colors">★</button>
+            <button type="button" data-val="5" class="star-pick text-gray-600 hover:text-amber-400 text-2xl leading-none transition-colors">★</button>
+            <span id="selectedRatingText" class="text-xs font-bold text-amber-400 ml-2">5 / 5</span>
+          </div>
+
+          <form id="addReviewForm" class="space-y-2.5">
+            <input type="text" id="reviewerNameInput" required placeholder="Takma adınız..." 
+                   class="w-full bg-[#0a0f1d] border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-400">
+            <textarea id="reviewerCommentInput" required rows="2" placeholder="Oyun hakkındaki fikriniz..." 
+                      class="w-full bg-[#0a0f1d] border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-400"></textarea>
+            <button type="submit" class="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs transition duration-150" data-i18n="submitReviewBtn">
+              Puanı ve Yorumu Gönder
+            </button>
+          </form>
+        </div>
+
+        <!-- Yapılmış Yorumlar Listesi -->
+        <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5" data-i18n="allReviews">Oyuncu Yorumları</h5>
+        <div id="commentsContainer" class="space-y-2.5 overflow-y-auto flex-1 pr-1 text-xs">
+          <!-- JS ile doldurulacak -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. YÖNETİCİ ŞİFRE MODALI -->
+  <div id="passwordModal" class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-[#121929] border border-gray-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative">
+      <button id="closePasswordModal" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <h3 class="text-center font-orbitron font-bold text-lg text-white mb-2" data-i18n="adminAuthTitle">Yönetici Doğrulaması</h3>
+      <p class="text-center text-xs text-gray-400 mb-5" data-i18n="adminAuthDesc">Oyun eklemek veya silmek için panel şifresini girin.</p>
+      
+      <form id="passwordForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1" data-i18n="passwordLabel">Şifre</label>
+          <input type="password" id="adminPasswordInput" required class="w-full bg-[#0a0f1d] border border-gray-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-pink-500">
+        </div>
+        <p id="passwordError" class="hidden text-rose-400 text-xs text-center" data-i18n="passwordErrorMsg">Hatalı şifre! Lütfen tekrar deneyin.</p>
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-semibold text-sm transition duration-200" data-i18n="loginBtn">Giriş Yap</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. YÖNETİCİ PANELİ MODALI -->
+  <div id="adminPanelModal" class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+    <div class="bg-[#0b0f19] border border-gray-700 w-full max-w-4xl rounded-2xl shadow-2xl relative flex flex-col max-h-[90vh]">
+      
+      <!-- Admin Header -->
+      <div class="border-b border-gray-800 p-5 sm:px-8 flex items-center justify-between shrink-0">
+        <div>
+          <h2 class="font-orbitron text-xl font-bold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span data-i18n="adminDashboardTitle">Yönetici Paneli</span>
+          </h2>
+          <p class="text-xs text-gray-400 mt-1" data-i18n="adminDashboardSubtitle">Yeni oyun ekle veya kayıtlı oyunları yönet.</p>
+        </div>
+        <button id="closeAdminPanelBtn" class="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Admin Body (Scrollable) -->
+      <div class="p-5 sm:p-8 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Sol: Yeni Oyun Ekle Formu -->
+        <div class="bg-[#121929] border border-gray-800 rounded-xl p-5 sm:p-6">
+          <h3 class="font-orbitron font-bold text-white mb-5 border-b border-gray-800 pb-3" data-i18n="addNewGameTitle">Yeni Web Oyunu Ekle</h3>
+          <form id="addGameForm" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 mb-1.5" data-i18n="gameNameLabel">Oyun İsmi *</label>
+                <input type="text" id="gameTitleInput" required class="w-full bg-[#0a0f1d] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-pink-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 mb-1.5" data-i18n="categoryLabel">Kategori *</label>
+                <select id="gameCategoryInput" class="w-full bg-[#0a0f1d] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-pink-500 focus:outline-none">
+                  <option value="Aksiyon">Aksiyon</option>
+                  <option value="Arcade">Arcade</option>
+                  <option value="Bulmaca">Bulmaca</option>
+                  <option value="Retro">Retro</option>
+                  <option value="Spor">Spor</option>
+                  <option value="Strateji">Strateji</option>
+                  <option value="Diğer">Diğer</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1.5" data-i18n="gameUrlLabel">Oyunun Web Linki (Embed/iframe URL) *</label>
+              <input type="url" id="gameUrlInput" required placeholder="https://..." class="w-full bg-[#0a0f1d] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-pink-500 focus:outline-none mb-1">
+              <p class="text-[10px] text-gray-500" data-i18n="gameUrlHint">İpucu: itch.io, github.io veya herhangi bir web oyunu linkini yapıştırabilirsiniz.</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1.5" data-i18n="coverImageLabel">Kapak Görseli</label>
+              <div class="space-y-3">
+                <!-- Dosya Seçimi -->
+                <div class="relative w-full">
+                  <input type="file" id="gameImageFileInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                  <div class="w-full bg-gray-800/50 border border-dashed border-gray-600 rounded-lg px-3 py-4 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white hover:border-pink-500 transition-colors">
+                    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="text-xs font-semibold" data-i18n="selectImageFile">Bilgisayardan Fotoğraf Seç</span>
+                  </div>
+                </div>
+
+                <!-- Önizleme -->
+                <div id="imagePreviewContainer" class="hidden relative w-full aspect-video rounded-lg overflow-hidden border border-gray-700 bg-black">
+                  <img id="imagePreview" src="" alt="Önizleme" class="w-full h-full object-cover">
+                  <div class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <button type="button" id="removeImageBtn" class="bg-rose-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold" data-i18n="removeImage">Görseli Kaldır</button>
+                  </div>
+                  <span class="absolute bottom-2 left-2 text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded font-bold" data-i18n="imageReady">Kapak Görseli Hazır</span>
+                </div>
+
+                <!-- Veya URL -->
+                <input type="url" id="gameImageUrlInput" placeholder="veya Görsel URL'si yapıştırın" class="w-full bg-[#0a0f1d] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-pink-500 focus:outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1.5" data-i18n="descLabel">Açıklama (İsteğe bağlı)</label>
+              <textarea id="gameDescInput" rows="2" class="w-full bg-[#0a0f1d] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-pink-500 focus:outline-none"></textarea>
+            </div>
+
+            <button type="submit" id="submitNewGameBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-sm shadow-lg transition-all" data-i18n="addGameBtn">
+              Oyunu Sisteme Ekle ve Yayınla
+            </button>
+          </form>
+        </div>
+
+        <!-- Sağ: Mevcut Oyunları Yönet -->
+        <div class="flex flex-col h-[500px] lg:h-auto">
+          <div class="flex items-center justify-between mb-4 border-b border-gray-800 pb-3">
+            <h3 class="font-orbitron font-bold text-white" data-i18n="registeredGames">Kayıtlı Oyunlar</h3>
+            <span id="adminGameCount" class="bg-gray-800 text-cyan-400 text-xs font-mono font-bold px-2 py-0.5 rounded-full border border-gray-700">0</span>
+          </div>
+          
+          <div id="adminGamesList" class="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-none">
+            <!-- JS ile doldurulacak -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. KULLANICI GİRİŞ/KAYIT MODALI -->
+  <div id="authModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-[#121929] border border-gray-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative my-8">
+      <button id="closeAuthModal" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 mb-4 mx-auto">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/>
+        </svg>
+      </div>
+
+      <h3 id="authModalTitle" class="text-center font-orbitron font-bold text-lg text-white mb-5" data-i18n="loginTitle">Giriş Yap</h3>
+
+      <!-- Hata Mesajı -->
+      <div id="authErrorBox" class="hidden bg-rose-500/10 border border-rose-500/50 text-rose-400 text-xs p-2.5 rounded-lg mb-4 text-center break-words"></div>
+
+      <form id="authForm" class="space-y-3.5">
+        <div id="authNameGroup" class="hidden">
+          <label class="block text-xs font-medium text-gray-300 mb-1" data-i18n="nameLabel">Ad Soyad</label>
+          <input type="text" id="authNameInput" placeholder="Oyuncu adınız..." 
+                 class="w-full bg-[#0a0f1d] border border-gray-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-pink-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1" data-i18n="emailLabel">E-posta</label>
+          <input type="email" id="authEmailInput" placeholder="ornek@mail.com" required 
+                 class="w-full bg-[#0a0f1d] border border-gray-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-pink-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1" data-i18n="passwordLabel">Şifre</label>
+          <input type="password" id="authPasswordInput" placeholder="••••••••" required minlength="6"
+                 class="w-full bg-[#0a0f1d] border border-gray-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-pink-500">
+        </div>
+
+        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold text-sm transition duration-200 mt-2" data-i18n="loginBtnNav">
+          Giriş Yap
+        </button>
+      </form>
+
+      <div class="mt-4 flex items-center justify-between text-xs">
+        <span class="text-gray-500 w-full text-center border-b border-gray-800 leading-[0.1em] mb-4 mt-2">
+          <span class="bg-[#121929] px-2" data-i18n="orDivider">veya</span>
+        </span>
+      </div>
+
+      <button id="googleAuthBtn" type="button" class="w-full py-2.5 rounded-xl bg-white text-gray-900 hover:bg-gray-100 font-semibold text-sm transition duration-200 flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        <span data-i18n="googleLoginBtn">Google ile Giriş Yap</span>
+      </button>
+
+      <p class="text-center text-xs text-gray-400 mt-5">
+        <span id="authSwitchText" data-i18n="noAccountText">Hesabın yok mu?</span>
+        <button id="authSwitchBtn" class="text-pink-400 hover:underline font-semibold ml-1" data-i18n="registerLink">Hemen Kayıt Ol</button>
+      </p>
+    </div>
+  </div>
+
+  <!-- ==================== FIREBASE ==================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    let app, auth, db;
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      window.firebaseAuth = auth;
+      window.db = db;
+      window.appId = typeof __app_id !== 'undefined' ? __app_id : 'arcade-zone-portal';
+      window.fsCollection = collection;
+      window.fsDoc = doc;
+      window.fsSetDoc = setDoc;
+      window.fsDeleteDoc = deleteDoc;
+      window.fsOnSnapshot = onSnapshot;
+
+      window.doEmailLogin = async (email, password) => signInWithEmailAndPassword(auth, email, password);
+      window.doEmailRegister = async (name, email, password) => {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: name });
+        return cred;
+      };
+      window.doGoogleLogin = async () => {
+        const provider = new GoogleAuthProvider();
+        return signInWithPopup(auth, provider);
+      };
+      window.doLogout = async () => {
+        await signOut(auth);
+        // Çıkış yapıldıktan sonra sistemin bozulmaması için tekrar anonim (misafir) girişi yap
+        await signInAnonymously(auth);
+      };
+
+      const initAuth = async () => {
+        try {
+          if (typeof __initial_auth_token !== 'undefined') {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+        } catch(e) { console.error("Firebase auth init error:", e); }
+      };
+
+      initAuth();
+
+      let isInitialGamesLoad = true;
+      let unsubscribeGames = null;
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // Cloud veritabanını dinlemeye başla (Tüm kullanıcılar için)
+          if (!unsubscribeGames && window.db) {
+            const gamesRef = window.fsCollection(window.db, 'artifacts', window.appId, 'public', 'data', 'games');
+            unsubscribeGames = window.fsOnSnapshot(gamesRef, async (snapshot) => {
+              if (snapshot.empty && isInitialGamesLoad) {
+                isInitialGamesLoad = false;
+                // Veritabanı tamamen boşsa ilk kurulum olarak varsayılan oyunları yükle
+                for (const game of DEFAULT_GAMES) {
+                  try {
+                    await window.fsSetDoc(window.fsDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'games', game.id), game);
+                  } catch(e) { console.error("Varsayılan oyun eklenemedi:", e); }
+                }
+                return;
+              }
+              isInitialGamesLoad = false;
+              
+              const dbGames = [];
+              snapshot.forEach(doc => dbGames.push(doc.data()));
+              // Yeni eklenenler üstte olacak şekilde sırala (ID'ler timestamp içerir)
+              dbGames.sort((a,b) => b.id.localeCompare(a.id));
+              
+              if(typeof games !== 'undefined') {
+                games = dbGames;
+                renderCategories();
+                renderGames();
+                const adminModal = document.getElementById('adminPanelModal');
+                if(adminModal && adminModal.classList.contains('flex')) {
+                  renderAdminGamesList();
+                }
+                if (typeof currentGameInModal !== 'undefined' && currentGameInModal) {
+                  const updated = games.find(g => g.id === currentGameInModal.id);
+                  if (updated) {
+                    currentGameInModal = updated;
+                    renderModalReviews(currentGameInModal);
+                  }
+                }
+              }
+            }, (err) => {
+              console.error("Firestore okuma hatası:", err);
+            });
+          }
+        }
+
+        if (user && !user.isAnonymous) {
+          // Giriş Yapılmış Durum
+          document.getElementById('authNavGroup')?.classList.add('hidden');
+          document.getElementById('authNavGroup')?.classList.remove('flex');
+          document.getElementById('userNavGroup')?.classList.remove('hidden');
+          document.getElementById('userNavGroup')?.classList.add('flex');
+          
+          const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Oyuncu');
+          const nameDisplay = document.getElementById('userNameDisplay');
+          if(nameDisplay) nameDisplay.textContent = displayName;
+
+          const reviewerNameInput = document.getElementById('reviewerNameInput');
+          if(reviewerNameInput) {
+            reviewerNameInput.value = displayName;
+            reviewerNameInput.readOnly = true;
+            reviewerNameInput.classList.add('opacity-70', 'cursor-not-allowed');
+          }
+        } else {
+          // Anonim / Çıkış Yapılmış Durum
+          document.getElementById('authNavGroup')?.classList.remove('hidden');
+          document.getElementById('authNavGroup')?.classList.add('flex');
+          document.getElementById('userNavGroup')?.classList.add('hidden');
+          document.getElementById('userNavGroup')?.classList.remove('flex');
+          
+          const reviewerNameInput = document.getElementById('reviewerNameInput');
+          if(reviewerNameInput) {
+            reviewerNameInput.value = '';
+            reviewerNameInput.readOnly = false;
+            reviewerNameInput.classList.remove('opacity-70', 'cursor-not-allowed');
+          }
+        }
+      });
+    } catch(e) {
+       console.warn("Firebase not configured properly:", e);
+    }
+  </script>
+
+  <!-- ==================== JAVASCRIPT ==================== -->
+  <script>
+    /*
+      ARCADEZONE PORTAL
+      1. Özel Yönetici Şifresi: Metehan.22
+      2. Çoklu Dil Desteği: Türkçe (TR) & English (EN)
+      3. Yıldız Değerlendirmesi & Oyuncu Yorumları (localStorage ile kalıcı)
+      4. Oyun Ekleme, iframe ile oynatma & tam ekran
+    */
+
+    // Çeviri Sözlüğü (i18n)
+    const translations = {
+      tr: {
+        portalSubtitle: "Web Oyun Platformu",
+        searchPlaceholder: "Oyun ara (2048, Hextris, Aksiyon...)",
+        searchPlaceholderMob: "Oyun ara...",
+        adminPanelBtn: "Yönetici Paneli",
+        adminPanelBtnShort: "Yönetici",
+        heroBadge: "Anında Tarayıcıda Oyna & Puan Ver",
+        heroTitle: 'Favori Web Oyunlarını <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-cyan-400">Tek Tıkla Keşfet</span>',
+        heroDesc: "Topluluğun eklediği oyunları oyna, yıldız verip yorum yaz veya yönetici panelinden kendi favori oyunlarını platforma ekle!",
+        gamesTitle: "Oyunlar",
+        gameCountSuffix: "Oyun",
+        playsSuffix: "oynama",
+        playBtn: "Oyna",
+        noGamesTitle: "Aradığınız kriterde oyun bulunamadı",
+        noGamesDesc: "Lütfen farklı bir arama terimi deneyin veya filtreleri temizleyin.",
+        footerTagline: "Kendi tarayıcı oyun portalın.",
+        footerRights: "Tüm haklar geliştiricilerine aittir.",
+        reviewsBtn: "Puanlar & Yorumlar",
+        closeBtn: "Kapat",
+        gameLoading: "Oyun Başlatılıyor...",
+        reviewsHeading: "Yorumlar & Puanlama",
+        rateGamePrompt: "Bu oyunu değerlendir:",
+        submitReviewBtn: "Puanı ve Yorumu Gönder",
+        allReviews: "Oyuncu Yorumları",
+        noReviewsYet: "Henüz yorum yapılmamış. İlk yorumu sen yaz!",
+        reviewerNamePlaceholder: "Takma adınız...",
+        reviewerCommentPlaceholder: "Oyun hakkındaki fikriniz...",
+        adminAuthTitle: "Yönetici Doğrulaması",
+        adminAuthDesc: "Oyun eklemek veya silmek için panel şifresini girin.",
+        passwordLabel: "Şifre",
+        passwordErrorMsg: "Hatalı şifre! Lütfen tekrar deneyin.",
+        loginBtn: "Giriş Yap",
+        adminDashboardTitle: "Yönetici Paneli",
+        adminDashboardSubtitle: "Yeni oyun ekle veya kayıtlı oyunları yönet.",
+        addNewGameTitle: "Yeni Web Oyunu Ekle",
+        gameNameLabel: "Oyun İsmi *",
+        categoryLabel: "Kategori *",
+        gameUrlLabel: "Oyunun Web Linki (Embed/iframe URL) *",
+        gameUrlHint: "İpucu: itch.io, github.io veya herhangi bir web oyunu linkini yapıştırabilirsiniz.",
+        coverImageLabel: "Kapak Görseli",
+        selectImageFile: "Bilgisayardan Fotoğraf Seç",
+        imageUrlPlaceholder: "veya Görsel URL'si yapıştırın",
+        imageReady: "Kapak Görseli Hazır",
+        removeImage: "Görseli Kaldır",
+        descLabel: "Açıklama (İsteğe bağlı)",
+        descPlaceholder: "Oyun hakkında kısa bir bilgi...",
+        addGameBtn: "Oyunu Sisteme Ekle ve Yayınla",
+        addedSuccess: "✓ Başarıyla Eklendi!",
+        registeredGames: "Kayıtlı Oyunlar",
+        deleteBtn: "Sil",
+        catAll: "Tümü",
+        loginBtnNav: "Giriş",
+        registerBtnNav: "Kayıt Ol",
+        logoutBtn: "Çıkış",
+        loginTitle: "Giriş Yap",
+        registerTitle: "Kayıt Ol",
+        nameLabel: "Ad Soyad",
+        emailLabel: "E-posta",
+        orDivider: "veya",
+        googleLoginBtn: "Google ile Giriş Yap",
+        noAccountText: "Hesabın yok mu?",
+        registerLink: "Hemen Kayıt Ol",
+        hasAccountText: "Zaten hesabın var mı?",
+        loginLink: "Giriş Yap",
+        categories: {
+          "Bulmaca": "Bulmaca",
+          "Aksiyon": "Aksiyon",
+          "Retro": "Retro",
+          "Arcade": "Arcade",
+          "Strateji": "Strateji",
+          "Spor": "Spor",
+          "Diğer": "Diğer"
+        }
+      },
+      en: {
+        portalSubtitle: "Web Gaming Platform",
+        searchPlaceholder: "Search game (2048, Hextris, Action...)",
+        searchPlaceholderMob: "Search games...",
+        adminPanelBtn: "Admin Panel",
+        adminPanelBtnShort: "Admin",
+        heroBadge: "Instant Browser Play & Rate",
+        heroTitle: 'Discover Your Favorite <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-cyan-400">Web Games in 1-Click</span>',
+        heroDesc: "Play community-curated games, leave reviews & star ratings, or open the admin panel to add your own favorites!",
+        gamesTitle: "Games",
+        gameCountSuffix: "Games",
+        playsSuffix: "plays",
+        playBtn: "Play",
+        noGamesTitle: "No games found matching criteria",
+        noGamesDesc: "Please try a different search query or clear filters.",
+        footerTagline: "Your personal browser gaming portal.",
+        footerRights: "All rights belong to their respective developers.",
+        reviewsBtn: "Ratings & Reviews",
+        closeBtn: "Close",
+        gameLoading: "Launching Game...",
+        reviewsHeading: "Ratings & Reviews",
+        rateGamePrompt: "Rate this game:",
+        submitReviewBtn: "Submit Rating & Review",
+        allReviews: "Player Reviews",
+        noReviewsYet: "No reviews yet. Be the first to rate!",
+        reviewerNamePlaceholder: "Your nickname...",
+        reviewerCommentPlaceholder: "Your thoughts on this game...",
+        adminAuthTitle: "Admin Verification",
+        adminAuthDesc: "Enter the master password to access the panel.",
+        passwordLabel: "Password",
+        passwordErrorMsg: "Incorrect password! Please try again.",
+        loginBtn: "Sign In",
+        adminDashboardTitle: "Admin Dashboard",
+        adminDashboardSubtitle: "Add new web games or manage existing library.",
+        addNewGameTitle: "Add New Web Game",
+        gameNameLabel: "Game Title *",
+        categoryLabel: "Category *",
+        gameUrlLabel: "Game Web Link (Embed/iframe URL) *",
+        gameUrlHint: "Tip: Paste any valid web game URL from itch.io, GitHub, etc.",
+        coverImageLabel: "Cover Image",
+        selectImageFile: "Choose Image from Device",
+        imageUrlPlaceholder: "or paste an Image URL",
+        imageReady: "Cover Image Ready",
+        removeImage: "Remove Image",
+        descLabel: "Description (Optional)",
+        descPlaceholder: "Short summary about this game...",
+        addGameBtn: "Add Game to Portal",
+        addedSuccess: "✓ Successfully Added!",
+        registeredGames: "Registered Games",
+        deleteBtn: "Delete",
+        catAll: "All",
+        loginBtnNav: "Login",
+        registerBtnNav: "Sign Up",
+        logoutBtn: "Logout",
+        loginTitle: "Login",
+        registerTitle: "Sign Up",
+        nameLabel: "Full Name",
+        emailLabel: "Email",
+        orDivider: "or",
+        googleLoginBtn: "Continue with Google",
+        noAccountText: "Don't have an account?",
+        registerLink: "Sign Up Now",
+        hasAccountText: "Already have an account?",
+        loginLink: "Login Here",
+        categories: {
+          "Bulmaca": "Puzzle",
+          "Aksiyon": "Action",
+          "Retro": "Retro",
+          "Arcade": "Arcade",
+          "Strateji": "Strategy",
+          "Spor": "Sports",
+          "Diğer": "Other"
+        }
+      }
+    };
+
+    // Varsayılan Oyun Listesi
+    const DEFAULT_GAMES = [
+      {
+        id: "game_2048",
+        title: "2048 Klasik",
+        category: "Bulmaca",
+        url: "https://gabrielecirulli.github.io/2048/",
+        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60",
+        description: "Aynı sayıları birleştirerek 2048 kutusuna ulaşmaya çalışın!",
+        plays: 184,
+        reviews: [
+          { name: "Eren", rating: 5, comment: "Zamanın nasıl geçtiğini unutturan efsane oyun!", date: "2026-03-01" },
+          { name: "Can", rating: 4, comment: "Tasarımı sade ve bağımlılık yapıyor.", date: "2026-03-03" }
+        ]
+      },
+      {
+        id: "game_hextris",
+        title: "Hextris",
+        category: "Arcade",
+        url: "https://hextris.io/",
+        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&auto=format&fit=crop&q=60",
+        description: "Hızlı tempolu, altıgen blokları eşleştirme oyunu.",
+        plays: 120,
+        reviews: [
+          { name: "Mert", rating: 5, comment: "Refleksleri çok iyi test ediyor, müzikler harika.", date: "2026-03-05" }
+        ]
+      },
+      {
+        id: "game_clumsy_bird",
+        title: "Clumsy Bird",
+        category: "Retro",
+        url: "https://ellisonleao.github.io/clumsy-bird/",
+        image: "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=500&auto=format&fit=crop&q=60",
+        description: "Engelleri aşarak en yüksek skora ulaşın (Flappy klonu).",
+        plays: 245,
+        reviews: [
+          { name: "Selin", rating: 4, comment: "Oynaması zor ama skor kasmak çok zevkli.", date: "2026-03-06" }
+        ]
+      }
+    ];
+
+    // Durum (State)
+    let currentLang = localStorage.getItem('arcade_portal_lang') || 'en';
+    let games = [];
+    let selectedCategory = "Tümü";
+    let searchQuery = "";
+    let uploadedImageBase64 = null;
+    let isAdminAuthenticated = false;
+    let currentGameInModal = null;
+    let currentSelectedStar = 5;
+
+    // Element Referansları
+    const gamesGrid = document.getElementById('gamesGrid');
+    const noGamesFound = document.getElementById('noGamesFound');
+    const categoryContainer = document.getElementById('categoryContainer');
+    const gameCountBadge = document.getElementById('gameCountBadge');
+    const desktopSearchInput = document.getElementById('desktopSearchInput');
+    const mobileSearchInput = document.getElementById('mobileSearchInput');
+
+    // Dil Butonları
+    const langBtnTR = document.getElementById('langBtnTR');
+    const langBtnEN = document.getElementById('langBtnEN');
+
+    // Oyun Oynatıcı & Yorumlar
+    const playerModal = document.getElementById('playerModal');
+    const gameIframe = document.getElementById('gameIframe');
+    const playerGameTitle = document.getElementById('playerGameTitle');
+    const playerGameCategory = document.getElementById('playerGameCategory');
+    const playerModalAvgRating = document.getElementById('playerModalAvgRating');
+    const playerModalReviewCount = document.getElementById('playerModalReviewCount');
+    const playerLoadingSpinner = document.getElementById('playerLoadingSpinner');
+    const closePlayerBtn = document.getElementById('closePlayerBtn');
+    const reloadGameBtn = document.getElementById('reloadGameBtn');
+    const fullscreenGameBtn = document.getElementById('fullscreenGameBtn');
+    const toggleReviewsBtn = document.getElementById('toggleReviewsBtn');
+    const reviewsDrawer = document.getElementById('reviewsDrawer');
+    const drawerAverageBadge = document.getElementById('drawerAverageBadge');
+    const commentsContainer = document.getElementById('commentsContainer');
+    const starRatingSelect = document.getElementById('starRatingSelect');
+    const selectedRatingText = document.getElementById('selectedRatingText');
+    const addReviewForm = document.getElementById('addReviewForm');
+    const reviewerNameInput = document.getElementById('reviewerNameInput');
+    const reviewerCommentInput = document.getElementById('reviewerCommentInput');
+
+    // Admin Elementleri
+    const openAdminBtn = document.getElementById('openAdminBtn');
+    const passwordModal = document.getElementById('passwordModal');
+    const closePasswordModal = document.getElementById('closePasswordModal');
+    const passwordForm = document.getElementById('passwordForm');
+    const adminPasswordInput = document.getElementById('adminPasswordInput');
+    const passwordError = document.getElementById('passwordError');
+
+    const adminPanelModal = document.getElementById('adminPanelModal');
+    const closeAdminPanelBtn = document.getElementById('closeAdminPanelBtn');
+    const addGameForm = document.getElementById('addGameForm');
+    const gameTitleInput = document.getElementById('gameTitleInput');
+    const gameCategoryInput = document.getElementById('gameCategoryInput');
+    const gameUrlInput = document.getElementById('gameUrlInput');
+    const gameImageUrlInput = document.getElementById('gameImageUrlInput');
+    const gameImageFileInput = document.getElementById('gameImageFileInput');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const removeImageBtn = document.getElementById('removeImageBtn');
+    const gameDescInput = document.getElementById('gameDescInput');
+    const adminGamesList = document.getElementById('adminGamesList');
+    const adminGameCount = document.getElementById('adminGameCount');
+
+    // --- FIREBASE YARDIMCI FONKSİYONLAR ---
+    async function saveGameToDB(game) {
+      if (!window.db || !window.firebaseAuth.currentUser) return;
+      try {
+        const docRef = window.fsDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'games', game.id);
+        await window.fsSetDoc(docRef, game);
+      } catch(e) { console.error("Veritabanına kaydetme hatası:", e); }
+    }
+
+    async function deleteGameFromDB(id) {
+      if (!window.db || !window.firebaseAuth.currentUser) return;
+      try {
+        const docRef = window.fsDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'games', id);
+        await window.fsDeleteDoc(docRef);
+      } catch(e) { console.error("Veritabanından silme hatası:", e); }
+    }
+
+    // --- BAŞLATMA ---
+    function init() {
+      // Artık localStorage yerine Firebase kullanılıyor
+      applyLanguage(currentLang);
+      renderCategories();
+      renderGames();
+      setupEventListeners();
+      setupStarPicker();
+    }
+
+    function saveGamesToStorage() {
+      // İptal edildi - Artık Firebase kullanılıyor
+    }
+
+    // --- DİL YÖNETİMİ ---
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('arcade_portal_lang', lang);
+      applyLanguage(lang);
+      renderCategories();
+      renderGames();
+      if (currentGameInModal) {
+        renderModalReviews(currentGameInModal);
+      }
+    }
+
+    function applyLanguage(lang) {
+      const t = translations[lang];
+
+      // Aktif Buton Stili
+      if (lang === 'tr') {
+        langBtnTR.className = "px-2.5 py-1.5 rounded-lg transition-all text-white bg-pink-500 shadow";
+        langBtnEN.className = "px-2.5 py-1.5 rounded-lg transition-all text-gray-400 hover:text-white";
+      } else {
+        langBtnEN.className = "px-2.5 py-1.5 rounded-lg transition-all text-white bg-pink-500 shadow";
+        langBtnTR.className = "px-2.5 py-1.5 rounded-lg transition-all text-gray-400 hover:text-white";
+      }
+
+      // data-i18n etiketlerini güncelle
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+          el.innerHTML = t[key];
+        }
+      });
+
+      // Placeholder'lar
+      if (desktopSearchInput) desktopSearchInput.placeholder = t.searchPlaceholder;
+      if (mobileSearchInput) mobileSearchInput.placeholder = t.searchPlaceholderMob;
+      if (reviewerNameInput) reviewerNameInput.placeholder = t.reviewerNamePlaceholder;
+      if (reviewerCommentInput) reviewerCommentInput.placeholder = t.reviewerCommentPlaceholder;
+      if (gameImageUrlInput) gameImageUrlInput.placeholder = t.imageUrlPlaceholder;
+      if (gameDescInput) gameDescInput.placeholder = t.descPlaceholder;
+    }
+
+    function getTranslatedCategory(catKey) {
+      const t = translations[currentLang];
+      return t.categories[catKey] || catKey;
+    }
+
+    // --- PUAN HESAPLAMA YARDIMCISI ---
+    function getGameRatingData(game) {
+      const revs = game.reviews || [];
+      if (revs.length === 0) {
+        return { average: 5.0, count: 0 };
+      }
+      const sum = revs.reduce((acc, r) => acc + (Number(r.rating) || 5), 0);
+      const avg = (sum / revs.length).toFixed(1);
+      return { average: avg, count: revs.length };
+    }
+
+    // --- KATEGORİLERİ RENDER ETME ---
+    function renderCategories() {
+      const t = translations[currentLang];
+      const categoriesSet = new Set(["Tümü"]);
+      games.forEach(g => {
+        if (g.category) categoriesSet.add(g.category);
+      });
+      const categories = Array.from(categoriesSet);
+
+      categoryContainer.innerHTML = '';
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        const isActive = (cat === selectedCategory);
+        const displayName = (cat === "Tümü") ? t.catAll : getTranslatedCategory(cat);
+
+        btn.className = `px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 border ${
+          isActive 
+            ? 'bg-gradient-to-r from-pink-500 to-purple-600 border-pink-500 text-white shadow-md' 
+            : 'bg-[#12192b] border-gray-800 text-gray-400 hover:text-white hover:border-gray-700'
+        }`;
+        btn.textContent = displayName;
+        btn.onclick = () => {
+          selectedCategory = cat;
+          renderCategories();
+          renderGames();
+        };
+        categoryContainer.appendChild(btn);
+      });
+    }
+
+    // --- OYUNLARI LİSTELEME ---
+    function renderGames() {
+      const t = translations[currentLang];
+      const filtered = games.filter(game => {
+        const matchesCategory = (selectedCategory === "Tümü" || game.category === selectedCategory);
+        const matchesSearch = game.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                              (game.description && game.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                              game.category.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
+
+      gameCountBadge.textContent = `${filtered.length} ${t.gameCountSuffix}`;
+      gamesGrid.innerHTML = '';
+
+      if (filtered.length === 0) {
+        noGamesFound.classList.remove('hidden');
+      } else {
+        noGamesFound.classList.add('hidden');
+        filtered.forEach(game => {
+          const card = createGameCard(game);
+          gamesGrid.appendChild(card);
+        });
+      }
+    }
+
+    // Oyun Kartı HTML Üretimi
+    function createGameCard(game) {
+      const t = translations[currentLang];
+      const card = document.createElement('div');
+      card.className = "group bg-[#111728] border border-gray-800/80 rounded-2xl overflow-hidden hover:border-pink-500/50 hover:shadow-xl transition-all duration-300 flex flex-col";
+
+      const fallbackImage = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&auto=format&fit=crop&q=60";
+      const imageSrc = game.image || fallbackImage;
+      const { average, count } = getGameRatingData(game);
+
+      card.innerHTML = `
+        <div class="relative aspect-video w-full overflow-hidden bg-gray-900 cursor-pointer card-trigger">
+          <img src="${imageSrc}" alt="${game.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='${fallbackImage}'">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#111728] via-transparent to-transparent opacity-80"></div>
+          
+          <!-- Kategori Rozeti -->
+          <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[11px] font-semibold text-cyan-400 border border-cyan-500/20">
+            ${getTranslatedCategory(game.category)}
+          </span>
+
+          <!-- Yıldız / Puan Rozeti -->
+          <div class="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[11px] font-bold text-amber-400 border border-amber-500/30 flex items-center gap-1">
+            <span>★</span>
+            <span>${average}</span>
+            <span class="text-gray-400 text-[10px]">(${count})</span>
+          </div>
+
+          <!-- Hover Play Butonu -->
+          <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40 backdrop-blur-[2px]">
+            <div class="w-12 h-12 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 class="font-orbitron font-bold text-base text-white group-hover:text-pink-400 transition-colors line-clamp-1">${game.title}</h3>
+            <p class="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">${game.description || ''}</p>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-gray-800/60 flex items-center justify-between text-xs">
+            <span class="text-gray-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              ${game.plays || 0} ${t.playsSuffix}
+            </span>
+            <button class="card-trigger text-pink-400 hover:text-pink-300 font-semibold flex items-center gap-1 group-hover:underline">
+              ${t.playBtn} &rarr;
+            </button>
+          </div>
+        </div>
+      `;
+
+      card.querySelectorAll('.card-trigger').forEach(el => {
+        el.addEventListener('click', () => {
+          openGame(game);
+        });
+      });
+
+      return card;
+    }
+
+    // --- OYUN OYNATICI MODAL & YORUMLAR ---
+    function openGame(game) {
+      currentGameInModal = game;
+      
+      // Oynanma sayısını bulut veritabanında güncelle
+      const updatedGame = { ...game, plays: (game.plays || 0) + 1 };
+      saveGameToDB(updatedGame); 
+      // Firestore onSnapshot tetiklenip oyun listesini otomatik güncelleyecek.
+
+      playerGameTitle.textContent = game.title;
+      playerGameCategory.textContent = getTranslatedCategory(game.category);
+
+      renderModalReviews(game);
+
+      playerLoadingSpinner.classList.remove('hidden');
+      gameIframe.src = game.url;
+
+      gameIframe.onload = () => {
+        playerLoadingSpinner.classList.add('hidden');
+      };
+
+      playerModal.classList.remove('hidden');
+      playerModal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function renderModalReviews(game) {
+      const t = translations[currentLang];
+      const { average, count } = getGameRatingData(game);
+
+      playerModalAvgRating.textContent = average;
+      playerModalReviewCount.textContent = `(${count})`;
+      drawerAverageBadge.textContent = `★ ${average} (${count})`;
+
+      commentsContainer.innerHTML = '';
+      const revs = game.reviews || [];
+
+      if (revs.length === 0) {
+        commentsContainer.innerHTML = `<p class="text-xs text-gray-500 py-4 text-center">${t.noReviewsYet}</p>`;
+        return;
+      }
+
+      // En yeni yorumlar üstte
+      [...revs].reverse().forEach(rev => {
+        const item = document.createElement('div');
+        item.className = "bg-[#141b2d] p-3 rounded-xl border border-gray-800 space-y-1";
+        
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+          starsHtml += `<span class="${i <= (rev.rating || 5) ? 'text-amber-400' : 'text-gray-600'}">★</span>`;
+        }
+
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-xs">${escapeHtml(rev.name || 'Oyuncu')}</span>
+            <div class="text-xs">${starsHtml}</div>
+          </div>
+          <p class="text-gray-300 text-[11px] leading-relaxed break-words">${escapeHtml(rev.comment || '')}</p>
+          <span class="text-[10px] text-gray-500 block text-right">${rev.date || ''}</span>
+        `;
+        commentsContainer.appendChild(item);
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function setupStarPicker() {
+      const stars = starRatingSelect.querySelectorAll('.star-pick');
+      stars.forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentSelectedStar = parseInt(btn.getAttribute('data-val'), 10);
+          updateStarPickerUI();
+        });
+      });
+      updateStarPickerUI();
+    }
+
+    function updateStarPickerUI() {
+      const stars = starRatingSelect.querySelectorAll('.star-pick');
+      stars.forEach(btn => {
+        const val = parseInt(btn.getAttribute('data-val'), 10);
+        if (val <= currentSelectedStar) {
+          btn.classList.remove('text-gray-600');
+          btn.classList.add('text-amber-400');
+        } else {
+          btn.classList.remove('text-amber-400');
+          btn.classList.add('text-gray-600');
+        }
+      });
+      selectedRatingText.textContent = `${currentSelectedStar} / 5`;
+    }
+
+    function closeGame() {
+      gameIframe.src = "";
+      playerModal.classList.add('hidden');
+      playerModal.classList.remove('flex');
+      document.body.style.overflow = 'auto';
+      currentGameInModal = null;
+    }
+
+    // --- YÖNETİCİ PANELİ (ŞİFRE: Metehan.22) ---
+    function openAdminAuth() {
+      if (isAdminAuthenticated) {
+        showAdminPanel();
+      } else {
+        passwordError.classList.add('hidden');
+        adminPasswordInput.value = '';
+        passwordModal.classList.remove('hidden');
+        passwordModal.classList.add('flex');
+        adminPasswordInput.focus();
+      }
+    }
+
+    function showAdminPanel() {
+      passwordModal.classList.add('hidden');
+      passwordModal.classList.remove('flex');
+      adminPanelModal.classList.remove('hidden');
+      adminPanelModal.classList.add('flex');
+      renderAdminGamesList();
+    }
+
+    function renderAdminGamesList() {
+      const t = translations[currentLang];
+      adminGameCount.textContent = games.length;
+      adminGamesList.innerHTML = '';
+
+      if (games.length === 0) {
+        adminGamesList.innerHTML = `<p class="text-xs text-gray-500 py-3">Henüz oyun eklenmemiş.</p>`;
+        return;
+      }
+
+      games.forEach((game) => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between p-3 rounded-xl bg-[#141b2d] border border-gray-800 text-xs gap-3";
+        item.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <img src="${game.image || 'https://placehold.co/100x100/111827/ec4899?text=Game'}" class="w-10 h-10 rounded-lg object-cover border border-gray-700 shrink-0">
+            <div class="truncate">
+              <h4 class="font-bold text-white truncate">${game.title}</h4>
+              <span class="text-cyan-400 text-[10px]">${getTranslatedCategory(game.category)}</span>
+            </div>
+          </div>
+          <button class="delete-btn px-2.5 py-1.5 bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white rounded-lg transition-colors flex items-center gap-1 shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            ${t.deleteBtn}
+          </button>
+        `;
+
+        item.querySelector('.delete-btn').addEventListener('click', () => {
+          deleteGame(game.id);
+        });
+
+        adminGamesList.appendChild(item);
+      });
+    }
+
+    function deleteGame(id) {
+      deleteGameFromDB(id);
+    }
+
+    // --- EVENT LISTENERS ---
+    function setupEventListeners() {
+      // Dil Değiştirme
+      langBtnTR.addEventListener('click', () => setLanguage('tr'));
+      langBtnEN.addEventListener('click', () => setLanguage('en'));
+
+      // Arama İşlemleri
+      const handleSearch = (val) => {
+        searchQuery = val;
+        renderGames();
+      };
+      desktopSearchInput.addEventListener('input', (e) => handleSearch(e.target.value));
+      mobileSearchInput.addEventListener('input', (e) => handleSearch(e.target.value));
+
+      // Player Kontrolleri
+      closePlayerBtn.addEventListener('click', closeGame);
+      reloadGameBtn.addEventListener('click', () => {
+        const currentSrc = gameIframe.src;
+        gameIframe.src = '';
+        playerLoadingSpinner.classList.remove('hidden');
+        setTimeout(() => {
+          gameIframe.src = currentSrc;
+        }, 150);
+      });
+
+      fullscreenGameBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          gameIframe.requestFullscreen().catch(err => {
+            console.log("Tam ekran hatası:", err);
+          });
+        } else {
+          document.exitFullscreen();
+        }
+      });
+
+      // Yorumlar Çekmecesini Aç/Kapa
+      toggleReviewsBtn.addEventListener('click', () => {
+        reviewsDrawer.classList.toggle('hidden');
+      });
+
+      // Yeni Yorum & Puan Gönderme
+      addReviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentGameInModal) return;
+
+        const name = reviewerNameInput.value.trim() || 'Oyuncu';
+        const comment = reviewerCommentInput.value.trim();
+        const dateStr = new Date().toISOString().split('T')[0];
+
+        const updatedGame = { ...currentGameInModal };
+        if (!updatedGame.reviews) {
+          updatedGame.reviews = [];
+        }
+
+        updatedGame.reviews.push({
+          name: name,
+          rating: currentSelectedStar,
+          comment: comment,
+          date: dateStr
+        });
+
+        // Veritabanına kaydet (Gerçek zamanlı olarak herkese güncellenecek)
+        await saveGameToDB(updatedGame);
+
+        reviewerCommentInput.value = '';
+      });
+
+      // Admin Açma & Şifre Doğrulama (Metehan.22)
+      openAdminBtn.addEventListener('click', openAdminAuth);
+      closePasswordModal.addEventListener('click', () => {
+        passwordModal.classList.add('hidden');
+        passwordModal.classList.remove('flex');
+      });
+
+      passwordForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const pwd = adminPasswordInput.value.trim();
+        
+        // Yeni Şifre: Metehan.22
+        if (pwd === 'Metehan.22') {
+          isAdminAuthenticated = true;
+          showAdminPanel();
+        } else {
+          passwordError.classList.remove('hidden');
+        }
+      });
+
+      closeAdminPanelBtn.addEventListener('click', () => {
+        adminPanelModal.classList.add('hidden');
+        adminPanelModal.classList.remove('flex');
+      });
+
+      // Görsel Dosyası Yükleme (Base64)
+      gameImageFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            uploadedImageBase64 = event.target.result;
+            imagePreview.src = uploadedImageBase64;
+            imagePreviewContainer.classList.remove('hidden');
+            gameImageUrlInput.value = '';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      removeImageBtn.addEventListener('click', () => {
+        uploadedImageBase64 = null;
+        gameImageFileInput.value = '';
+        imagePreviewContainer.classList.add('hidden');
+      });
+
+      // Yeni Oyun Ekleme
+      addGameForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const t = translations[currentLang];
+
+        const title = gameTitleInput.value.trim();
+        const category = gameCategoryInput.value;
+        const url = gameUrlInput.value.trim();
+        const desc = gameDescInput.value.trim();
+
+        let image = uploadedImageBase64 || gameImageUrlInput.value.trim();
+        if (!image) {
+          image = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&auto=format&fit=crop&q=60";
+        }
+
+        const newGame = {
+          id: 'game_' + Date.now(),
+          title: title,
+          category: category,
+          url: url,
+          image: image,
+          description: desc,
+          plays: 0,
+          reviews: []
+        };
+
+        // Veritabanına kaydet (onSnapshot UI'ı otomatik güncelleyecek)
+        await saveGameToDB(newGame);
+
+        addGameForm.reset();
+        uploadedImageBase64 = null;
+        imagePreviewContainer.classList.add('hidden');
+
+        const submitBtn = document.getElementById('submitNewGameBtn');
+        const oldText = submitBtn.innerHTML;
+        submitBtn.innerHTML = t.addedSuccess;
+        submitBtn.classList.replace('from-pink-500', 'from-emerald-500');
+        setTimeout(() => {
+          submitBtn.innerHTML = oldText;
+          submitBtn.classList.replace('from-emerald-500', 'from-pink-500');
+        }, 1800);
+      });
+
+      // --- KULLANICI GİRİŞ & KAYIT (AUTH) MODAL EVENTLERİ ---
+      let isLoginMode = true;
+      const authModal = document.getElementById('authModal');
+      const authForm = document.getElementById('authForm');
+      const authErrorBox = document.getElementById('authErrorBox');
+      
+      const switchAuthMode = (toLogin) => {
+        isLoginMode = toLogin;
+        authErrorBox.classList.add('hidden');
+        authForm.reset();
+        
+        const t = translations[currentLang];
+        document.getElementById('authModalTitle').textContent = toLogin ? t.loginTitle : t.registerTitle;
+        document.getElementById('authSubmitBtn').textContent = toLogin ? t.loginBtnNav : t.registerBtnNav;
+        
+        if (toLogin) {
+          document.getElementById('authNameGroup').classList.add('hidden');
+          document.getElementById('authNameInput').required = false;
+          document.getElementById('authSwitchText').textContent = t.noAccountText;
+          document.getElementById('authSwitchBtn').textContent = t.registerLink;
+        } else {
+          document.getElementById('authNameGroup').classList.remove('hidden');
+          document.getElementById('authNameInput').required = true;
+          document.getElementById('authSwitchText').textContent = t.hasAccountText;
+          document.getElementById('authSwitchBtn').textContent = t.loginLink;
+        }
+      };
+
+      document.getElementById('openLoginBtn').addEventListener('click', () => {
+        switchAuthMode(true);
+        authModal.classList.remove('hidden');
+        authModal.classList.add('flex');
+      });
+
+      document.getElementById('openRegisterBtn').addEventListener('click', () => {
+        switchAuthMode(false);
+        authModal.classList.remove('hidden');
+        authModal.classList.add('flex');
+      });
+
+      document.getElementById('closeAuthModal').addEventListener('click', () => {
+        authModal.classList.add('hidden');
+        authModal.classList.remove('flex');
+      });
+
+      document.getElementById('authSwitchBtn').addEventListener('click', () => {
+        switchAuthMode(!isLoginMode);
+      });
+
+      authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        authErrorBox.classList.add('hidden');
+        const submitBtn = document.getElementById('authSubmitBtn');
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50');
+        
+        const email = document.getElementById('authEmailInput').value.trim();
+        const password = document.getElementById('authPasswordInput').value.trim();
+        const name = document.getElementById('authNameInput').value.trim();
+
+        try {
+          if (isLoginMode) {
+            await window.doEmailLogin(email, password);
+          } else {
+            await window.doEmailRegister(name, email, password);
+          }
+          authModal.classList.add('hidden');
+          authModal.classList.remove('flex');
+        } catch (error) {
+          console.error("Auth Error:", error);
+          authErrorBox.classList.remove('hidden');
+          
+          let msg = error.message;
+          const isTr = currentLang === 'tr';
+          
+          if(msg.includes('email-already-in-use')) msg = isTr ? "Bu e-posta zaten kullanımda." : "This email is already in use.";
+          else if(msg.includes('invalid-credential') || msg.includes('user-not-found') || msg.includes('wrong-password')) msg = isTr ? "E-posta veya şifre hatalı." : "Invalid email or password.";
+          else if(msg.includes('weak-password')) msg = isTr ? "Şifre en az 6 karakter olmalıdır." : "Password must be at least 6 characters.";
+          else if(msg.includes('operation-not-allowed')) msg = isTr ? "E-posta kaydı kapalı. Lütfen Google ile giriş yapın." : "Email registration is disabled. Please use Google Login.";
+          
+          authErrorBox.textContent = msg;
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-50');
+        }
+      });
+
+      document.getElementById('googleAuthBtn').addEventListener('click', async () => {
+        authErrorBox.classList.add('hidden');
+        try {
+          await window.doGoogleLogin();
+          authModal.classList.add('hidden');
+          authModal.classList.remove('flex');
+        } catch (error) {
+          authErrorBox.classList.remove('hidden');
+          authErrorBox.textContent = "Google Girişi başarısız: İşlem iptal edildi.";
+        }
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        try {
+          if(window.doLogout) await window.doLogout();
+        } catch(e) { console.error(e); }
+      });
+
+
+      // ESC Tuşu ile Modalları Kapatma
+      document.addEventListener('keydown', (e) => {
+        if (e.key === "Escape") {
+          if (!playerModal.classList.contains('hidden')) closeGame();
+          if (!passwordModal.classList.contains('hidden')) {
+            passwordModal.classList.add('hidden');
+            passwordModal.classList.remove('flex');
+          }
+          if (!adminPanelModal.classList.contains('hidden')) {
+            adminPanelModal.classList.add('hidden');
+            adminPanelModal.classList.remove('flex');
+          }
+          if (!authModal.classList.contains('hidden')) {
+            authModal.classList.add('hidden');
+            authModal.classList.remove('flex');
+          }
+        }
+      });
+    }
+
+    // Başlat
+    window.onload = function() {
+      init();
+    };
+  </script>
+</body>
+</html>
