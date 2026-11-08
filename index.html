@@ -511,7 +511,15 @@
     import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // EĞER İLERİDE KENDİ FİREBASE'İNİ KURARSAN BİLGİLERİ BURAYA YAPIŞTIRACAKSIN:
-    const customFirebaseConfig = {}; 
+    const customFirebaseConfig = {
+      apiKey: "AIzaSyD69V9MXZXuONoZ55lxtDyBZcasbJ8igFE",
+      authDomain: "zoneplayr-47e38.firebaseapp.com",
+      projectId: "zoneplayr-47e38",
+      storageBucket: "zoneplayr-47e38.firebasestorage.app",
+      messagingSenderId: "548430225950",
+      appId: "1:548430225950:web:a5c7e73279270e88df840f",
+      measurementId: "G-J0KF0QTVFG"
+    }; 
     
     const systemConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
     const firebaseConfig = Object.keys(customFirebaseConfig).length > 0 ? customFirebaseConfig : systemConfig;
