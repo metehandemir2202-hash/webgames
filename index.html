@@ -272,10 +272,12 @@
           <p class="font-orbitron text-sm text-gray-400" data-i18n="gameLoading">Oyun Başlatılıyor...</p>
         </div>
 
+        <!-- SANDBOX EKLENDİ: allow-popups ve allow-top-navigation BİLEREK ÇIKARILDI Kİ REKLAMLAR/POPUP'LAR ENGELLENSİN -->
         <iframe id="gameIframe" 
                 src="" 
                 class="w-full h-full border-0 relative z-20"
                 allow="autoplay; fullscreen; gamepad; focus-without-user-activation *" 
+                sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-orientation-lock allow-downloads"
                 allowfullscreen>
         </iframe>
       </div>
